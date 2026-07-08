@@ -1,0 +1,74 @@
+[
+  {
+    "name": "New Arrivals",
+    "slug": "new-arrivals",
+    "image": "/uploads/categories/new-in.webp",
+    "description": "Discover our latest curation of seasonal essentials, crafted with timeless lines and refined tailoring."
+  },
+  {
+    "name": "Ready-to-Wear",
+    "slug": "ready-to-wear",
+    "image": "/uploads/categories/ready-to-wear.webp",
+    "description": "Effortlessly elegant pret wear ready for instant premium style."
+  },
+  {
+    "name": "Unstitched",
+    "slug": "unstitched",
+    "image": "/uploads/categories/unstitched.webp",
+    "description": "Finely woven unstitched premium fabrics to construct your custom fit."
+  },
+  {
+    "name": "Shawls",
+    "slug": "shawl",
+    "image": "/uploads/categories/shawl1.webp",
+    "description": "Intricately woven luxury shawls for perfect styling and layering comfort."
+  },
+  {
+    "name": "Formal Wear",
+    "slug": "formal",
+    "image": "/uploads/categories/formal.avif",
+    "description": "Luxury evening pieces for your formal celebrations and events."
+  },
+  {
+    "name": "Monochrome",
+    "slug": "monochrome",
+    "image": "/uploads/categories/monochrome1.webp",
+    "description": "Elegant silhouettes in classic high-contrast monochrome design."
+  },
+  {
+    "name": "Sale",
+    "slug": "sale",
+    "image": "/uploads/categories/sale1.webp",
+    "description": "Luxury and sophistication at attractive seasonal offerings."
+  },
+  {
+    "name": "Lawn Collection",
+    "slug": "lawn-collection",
+    "image": "/uploads/categories/unstitched3.webp",
+    "description": "Premium breathable lawn suits for ultimate summer elegance."
+  },
+  {
+    "name": "Luxury Pret",
+    "slug": "luxury-pret",
+    "image": "/uploads/categories/ready-to-wear2.jpg",
+    "description": "Ornate silk kurti designs and modern cuts for upscale events."
+  },
+  {
+    "name": "Embroidered",
+    "slug": "embroidered",
+    "image": "/uploads/categories/unstichted5.webp",
+    "description": "Masterpieces of threadwork, mirror details, and hand embellishments."
+  },
+  {
+    "name": "Wedding Wear",
+    "slug": "wedding-wear",
+    "image": "/uploads/categories/wedding-wear.avif",
+    "description": "Bespoke bridal wear and heavily embroidered festive ensembles."
+  },
+  {
+    "name": "Winter Collection",
+    "slug": "winter-collection",
+    "image": "/uploads/categories/shwal4.webp",
+    "description": "Premium velvet suits, heavy embroidered shawls, and warm winter ensembles."
+  }
+]

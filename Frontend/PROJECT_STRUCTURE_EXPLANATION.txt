@@ -1,0 +1,205 @@
+========================================================================
+FABRIC HUB - PROJECT FLOW & REACT CONCEPTS DOCUMENTATION
+========================================================================
+
+This document outlines the complete architectural flow, file-by-file organization, and React concepts used within the Fabric Hub e-commerce application.
+
+------------------------------------------------------------------------
+1. COMPLETE PROJECT FLOW
+------------------------------------------------------------------------
+
+The Fabric Hub application operates as a client-side single page application (SPA). Here is the step-by-step lifecycle of how it loads and executes:
+
+1. Entry & Bootstrapping:
+   - index.html is loaded by the browser and loads the entry point script: `src/main.jsx`.
+   - `main.jsx` initializes React, mounts the App on the DOM root element, and wraps `<App />` in `<BrowserRouter>` to enable client-side routing.
+
+2. Global Layout & Context Providers (src/App.jsx):
+   - The `<App />` component acts as the global layout template.
+   - It wraps all child elements in two global providers:
+     * `<AuthProvider>` (handles user session and access control)
+     * `<CartProvider>` (handles shopping cart state, totals, discounts, promo codes)
+   - It defines a consistent visual structure: a sticky `<Navbar />` at the top, a dynamic `<main>` container in the middle, a footer at the bottom, and a persistent floating `<WhatsAppButton />` for instant customer support.
+
+3. Page Routing (src/routes/AppRoutes.jsx):
+   - The `<AppRoutes />` component maps specific URLs to page components:
+     * `/` -> `Home.jsx` (Landing page with carousels, category grid, and featured highlights).
+     * `/shop` -> `Shop.jsx` (Catalog with search, filtering by category, size, price, and sorting logic).
+     * `/category/:slug` -> `Category.jsx` (Dynamic route showing products within a specific category, e.g., silk, lawn).
+     * `/product/:id` -> `ProductDetails.jsx` (Detail page showing product details, interactive variant selection, reviews, and wishlist toggling).
+     * `/cart` -> `Cart.jsx` (Checkout steps: Cart Summary -> Shipping Form -> Payment -> Success Screen).
+     * `/login` & `/register` -> `Login.jsx` & `Register.jsx` (User authentication pages).
+     * `/admin` -> `Admin.jsx` (Dashboard for managing inventory via CRUD operations and listing user orders. Restrained to Admin users only).
+     * `*` -> Catch-all route that redirects back to `/`.
+
+4. State Synchronisation with LocalStorage:
+   - Authentication, wishlists, products lists, and cart items are stored and read from local storage using custom hooks and utils. This ensures that refreshing the browser does not lose user data (persistent shopping session).
+
+
+------------------------------------------------------------------------
+2. DIRECTORY AND FILE STRUCTURE
+------------------------------------------------------------------------
+
+Below is the directory tree of the `src/` codebase, showing where each component and logic block resides:
+
+src/
+├── main.jsx                 # Mounts the React application on the DOM.
+├── App.jsx                  # Main wrapper component providing global layout and contexts.
+├── App.css                  # Simple styles.
+├── index.css                # Global style settings including Tailwind CSS directives.
+│
+├── routes/
+│   └── AppRoutes.jsx        # Routing table mapping pages to URLs.
+│
+├── context/
+│   ├── AuthContext.jsx      # Global context for user signup, login, logout, and roles.
+│   └── CartContext.jsx      # Global context for shopping cart items, promo codes, drawer triggers.
+│
+├── hooks/
+│   ├── useLocalStorage.js   # Hook to read/write persistent state values to localStorage.
+│   ├── useScrollToTop.js    # Resets window scroll position to the top on page change.
+│   └── useWishlist.js       # Hook to add or remove product IDs to/from the user's wishlist.
+│
+├── data/
+│   ├── banners.js           # Static data for promotional banners and hero slides.
+│   ├── categories.js        # Static categories data (name, description, slug, image).
+│   └── products.js          # Extensive list of mock products, specifications, and reviews.
+│
+├── utils/
+│   ├── cartUtils.js         # Computation helpers for cart (subtotal, shipping, promo code percentages).
+│   ├── orderUtils.js        # Methods to generate IDs, record new order objects, and calc totals.
+│   ├── productUtils.js      # Utility functions for product filtering, searching, and sorting.
+│   └── storageKeys.js       # Constants for localStorage keys (avoid typo bugs).
+│
+├── pages/
+│   ├── Home.jsx             # Displays promotional sections and category entry points.
+│   ├── Shop.jsx             # Grid catalog containing filters and sort dropdowns.
+│   ├── Category.jsx         # Custom product grid focused on a singular category.
+│   ├── ProductDetails.jsx   # Tabbed product details, quantity selectors, variant options.
+│   ├── Cart.jsx             # Stepper form for reviews, shipping fields, mock card payment, and order success.
+│   ├── Login.jsx            # Sign-in form utilizing context auth.
+│   ├── Register.jsx         # Sign-up form automatically logging in the user upon registration.
+│   └── Admin.jsx            # Management dashboard showing performance cards, order lists, and product tables.
+│
+└── components/
+    ├── WhatsAppButton.jsx   # Floating whatsapp icon trigger.
+    │
+    ├── layout/              # Components structuring global pages.
+    │   ├── Navbar.jsx       # Header menu bar (logo, search overlay toggle, drawer toggle, user profile).
+    │   ├── Footer.jsx       # Copyright links and email newsletter form.
+    │   └── navbar/
+    │       ├── CartDrawer.jsx     # Slide-out sidebar showing current cart items and checkout buttons.
+    │       ├── MobileMenu.jsx     # Side menu for mobile screens.
+    │       ├── SearchOverlay.jsx  # Fullscreen search bar.
+    │       └── UserMenu.jsx       # Profile dropdown containing sign-out and admin dashboard links.
+    │
+    ├── home/                # Modules specific to the Home Page.
+    │   ├── Hero.jsx         # Auto-playing image slideshow with text.
+    │   ├── CategorySection.jsx    # Visual blocks of available product types.
+    │   ├── FeaturedProducts.jsx   # Grid of recommended products.
+    │   ├── DiscountBanner.jsx     # Visual advertisement highlighting sale offers.
+    │   ├── BestSellers.jsx        # Grid displaying popular products.
+    │   └── Banner.jsx             # Promotional call-to-actions.
+    │
+    ├── products/            # Shared product components.
+    │   ├── ProductCard.jsx  # A card with rating stars, price, quick options, and hover animations.
+    │   ├── ProductGrid.jsx  # Grid layout system.
+    │   ├── Filter.jsx       # Side controls for filtering products.
+    │   └── SearchBar.jsx    # Standard search input.
+    │
+    ├── shop/                # Shop catalog modules.
+    │   ├── ShopHeader.jsx   # Page title section.
+    │   └── MobileFilterDrawer.jsx # Slide-out filters for small screens.
+    │
+    ├── product-details/     # Product page elements.
+    │   ├── ProductImageGallery.jsx # Active thumbnail selector and zoom container.
+    │   ├── ProductInfo.jsx         # Title, badge, and descriptive ratings.
+    │   ├── ProductOptions.jsx      # Buttons to choose available sizes and fabric colors.
+    │   ├── ProductTabs.jsx         # Tabs switching between description, specs, and reviews.
+    │   ├── QuantitySelector.jsx    # Counter to adjust product quantity.
+    │   └── RelatedProducts.jsx     # Related cards belonging to the same category.
+    │
+    ├── cart/                # Checkout modules.
+    │   ├── CartItem.jsx     # Inline cart component row with trash/quantity edits.
+    │   └── checkout/
+    │       ├── CartTable.jsx       # Table summary in full checkout mode.
+    │       ├── CheckoutSteps.jsx   # Visual stepper bar showing steps.
+    │       ├── ShippingForm.jsx    # Customer information fields.
+    │       ├── PaymentForm.jsx     # Mock payment form.
+    │       ├── OrderSummary.jsx    # Calculation panel.
+    │       └── OrderSuccess.jsx    # Success checkmark visual.
+    │
+    ├── auth/                # Auth components.
+    │   ├── InputField.jsx   # Custom login input field.
+    │   └── GoogleButton.jsx # Decorative Google authentication option.
+    │
+    └── admin/               # Admin panel modules.
+        ├── DashboardCard.jsx # Info boxes reporting site analytics.
+        ├── OrderTable.jsx    # List of orders with status badges.
+        ├── ProductTable.jsx  # Product inventory lists showing CRUD buttons.
+        └── products/
+            ├── ProductTableRow.jsx   # Individual row of the products inventory list.
+            └── ProductFormModal.jsx  # Modal dialog displaying fields to add or edit catalog items.
+
+
+------------------------------------------------------------------------
+3. REACT CONCEPTS USED IN THE PROJECT (EXPLAINED IN SIMPLE TERMS)
+------------------------------------------------------------------------
+
+Here are the React and modern web development concepts used in this project:
+
+1. Components & Props
+   - Components: Small, self-contained sections of code that return HTML-like code (JSX). For example, `Navbar.jsx` contains the logic and visual code specifically for the header.
+   - Props (Properties): Arguments passed into components to make them dynamic and reusable, similar to parameters passed to a function.
+     * Example: `<ProductCard product={item} />` allows the single card component to display details for different products depending on which item is passed.
+
+2. State Management (`useState`)
+   - State represents the local memory of a component. When a state variable changes, React automatically re-renders the component to show the updated information.
+   - Example: The quantity of a product inside `QuantitySelector.jsx` is tracked using:
+     `const [quantity, setQuantity] = useState(1);`
+     When the user clicks '+', `setQuantity(quantity + 1)` runs, instantly changing the count shown in the UI.
+
+3. Side Effects (`useEffect`)
+   - Used to run instructions at specific points in a component's life, such as when it first loads (mounts) or when specific state values change.
+   - Example: In `AuthContext.jsx`, a `useEffect` runs once when the app starts to check if a user session exists in local storage.
+
+4. Global State Sharing (Context API: `createContext` & `useContext`)
+   - In standard React, passing data down several layers of components (prop drilling) is tedious. Context solves this by allowing components to share global variables directly.
+   - The application has two main context files:
+     * `AuthContext.jsx`: Provides the `currentUser` object and `login`/`logout` status to components like the `Navbar` (to display username) and the `Admin` page (to block unauthorized access).
+     * `CartContext.jsx`: Exposes the `cartItems` list, subtotal, and methods like `addToCart` to any page in the application.
+
+5. Custom Hooks (Extracting Business Logic)
+   - Custom hooks are custom JavaScript functions whose names start with `use`. They allow developer to extract stateful logic and reuse it across different components.
+   - Examples:
+     * `useLocalStorage`: Reads and writes values directly to browser storage automatically.
+     * `useWishlist`: Keeps track of whether a product is liked or not and allows toggling it.
+
+6. Client-Side Routing (`react-router-dom`)
+   - Implements multi-page navigation without reloading the entire website.
+   - Features:
+     * `<Routes>` and `<Route>` specify the path and the element to display.
+     * Dynamic parameter paths (`/product/:id` or `/category/:slug`) allow capturing values from the URL via the `useParams()` hook (e.g., loading product details using `id`).
+     * `Navigate` and `useNavigate()` allow programmatic redirections (e.g., sending a user to home `/` when clicking logout or registering).
+
+7. Lists and Keys (Rendering Arrays)
+   - Used when displaying lists of items (like a grid of products). The code maps over the array and returns JSX elements.
+   - React requires a unique `key` prop on each mapped element so it can track changes, insertions, or deletions efficiently.
+   - Example:
+     ```javascript
+     {productsList.map((product) => (
+       <ProductCard key={product.id} product={product} />
+     ))}
+     ```
+
+8. Performance Optimization (`useMemo`)
+   - Memoization cache results of expensive computations. The computation is only rerun when its specific inputs (dependencies) change.
+   - In `Shop.jsx`, the operations of filtering and sorting products are wrapped in `useMemo` so they don't run on every single render (e.g. if the user toggles a unrelated modal), but only when search query, active category, or sorting order changes.
+
+9. Conditional Rendering
+   - Showing or hiding portions of UI dynamically using standard JS logic operators like `{condition && <Component />}` or ternary operators `{condition ? <YesComponent /> : <NoComponent />}`.
+   - Example: In `Navbar.jsx`, if the user is authenticated, the profile dropdown is shown; otherwise, a "Login" button is rendered.
+
+10. Animations & Transitions (Framer Motion)
+    - Fabric Hub integrates `framer-motion` (utilizing `<motion.div>`, `<AnimatePresence>`) to provide modern animations like fade-ins, slide-ins, and hover scaling.
+    - Example: Hovering over a product card triggers subtle scaling and shadow animations. Opening the cart drawer triggers a smooth sliding transition from the right edge.

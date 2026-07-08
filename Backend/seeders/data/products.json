@@ -1,0 +1,78 @@
+[
+  {
+    "title": "Ethereal Ivory Lawn Suit",
+    "price": 4500,
+    "category": "lawn-collection",
+    "images": [
+      "/uploads/products/unstitched.webp",
+      "/uploads/products/unstitched3.webp"
+    ],
+    "description": "An elegant unstitched 3-piece suit featuring a self-jacquard lawn shirt, embroidered organza borders, and a printed cambric dupatta.",
+    "rating": 4.8,
+    "reviewsCount": 24,
+    "stock": 15,
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "colors": [
+      { "name": "Ivory", "value": "#FFFFF0" },
+      { "name": "Soft Cream", "value": "#FFFDD0" }
+    ],
+    "featured": true
+  },
+  {
+    "title": "Crimson Rose Unstitched",
+    "price": 3850,
+    "category": "unstitched",
+    "images": [
+      "/uploads/products/unstitched3.webp",
+      "/uploads/products/unstitched.webp"
+    ],
+    "description": "Indulge in rich crimson tones with this beautiful unstitched 3-piece cotton ensemble. Beautifully detailed with threadwork panels and a soft net dupatta.",
+    "rating": 4.7,
+    "reviewsCount": 18,
+    "stock": 12,
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "colors": [
+      { "name": "Crimson Red", "value": "#990000" },
+      { "name": "Burgundy", "value": "#800020" }
+    ],
+    "featured": false
+  },
+  {
+    "title": "Mustard Fusion Kurta",
+    "price": 2990,
+    "category": "ready-to-wear",
+    "images": [
+      "/uploads/products/ready-to-wear.webp",
+      "/uploads/products/ready-to-wear3.webp"
+    ],
+    "description": "Brighten up your days with this structured digital print fusion kurta, showcasing a modern round hem and lace inserts along the sleeves.",
+    "rating": 4.5,
+    "reviewsCount": 32,
+    "stock": 20,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [
+      { "name": "Mustard Gold", "value": "#E1AD01" },
+      { "name": "Ochre", "value": "#CC7722" }
+    ],
+    "featured": true
+  },
+  {
+    "title": "Midnight Velvet Kaftan",
+    "price": 14500,
+    "category": "formal",
+    "images": [
+      "/uploads/products/formal.avif",
+      "/uploads/products/wedding-wear.avif"
+    ],
+    "description": "An absolute showstopper. Woven from luxurious silk micro-velvet, this formal kaftan features heavy hand-crafted gold zari tilla work along the neckline and borders.",
+    "rating": 4.9,
+    "reviewsCount": 14,
+    "stock": 8,
+    "sizes": ["S", "M", "L"],
+    "colors": [
+      { "name": "Obsidian Black", "value": "#0B0B0C" },
+      { "name": "Midnight Navy", "value": "#191970" }
+    ],
+    "featured": true
+  }
+]
