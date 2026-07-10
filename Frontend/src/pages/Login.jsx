@@ -7,7 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, loginWithGoogle, googleClientId } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -35,7 +35,30 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    setError("Google Sign-In is currently disabled. Please use your email and password to sign in.");
+    setError("");
+    if (window.google && googleClientId) {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: googleClientId,
+        scope: "email profile openid",
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            const res = await loginWithGoogle(tokenResponse.access_token);
+            if (res.success) {
+              navigate("/");
+            } else {
+              setError(res.message);
+            }
+          }
+        },
+        error_callback: (err) => {
+          setError("Google sign-in failed. Please try again.");
+          console.error("Google OAuth token client error:", err);
+        }
+      });
+      client.requestAccessToken();
+    } else {
+      setError("Google Sign-In is currently unavailable. Please refresh or try again later.");
+    }
   };
 
   return (

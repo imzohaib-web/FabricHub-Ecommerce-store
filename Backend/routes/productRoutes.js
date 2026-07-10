@@ -25,12 +25,22 @@ const createProductSchema = Joi.object({
     'number.min': 'Product price must be greater than or equal to 0',
     'any.required': 'Product price is required'
   }),
+  discountPrice: Joi.number().min(0).less(Joi.ref('price')).optional().messages({
+    'number.min': 'Discount price must be greater than or equal to 0',
+    'number.less': 'Discount price must be less than the regular price'
+  }),
   category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
     'string.pattern.base': 'Product category must be a valid MongoDB ObjectId hex string',
     'any.required': 'Product category is required'
   }),
-  images: Joi.array().items(Joi.string().trim().required()).min(1).required().messages({
-    'array.min': 'At least one product image path is required',
+  images: Joi.array().items(
+    Joi.object({
+      url: Joi.string().trim().required(),
+      publicId: Joi.string().trim().required(),
+      isPrimary: Joi.boolean().required()
+    }).required()
+  ).min(1).required().messages({
+    'array.min': 'At least one product image is required',
     'any.required': 'Product images are required'
   }),
   sizes: Joi.array().items(Joi.string().valid('XS', 'S', 'M', 'L', 'XL', 'OS')).optional(),
@@ -45,6 +55,7 @@ const createProductSchema = Joi.object({
     })
   ).optional(),
   stock: Joi.number().integer().min(0).default(0),
+  inStock: Joi.boolean().default(true),
   featured: Joi.boolean().default(false),
   rating: Joi.number().min(0).max(5).default(0),
   reviewsCount: Joi.number().integer().min(0).default(0)
@@ -57,10 +68,17 @@ const updateProductSchema = Joi.object({
   title: Joi.string().trim().max(100).optional(),
   description: Joi.string().trim().optional(),
   price: Joi.number().min(0).optional(),
+  discountPrice: Joi.number().min(0).optional(),
   category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional().messages({
     'string.pattern.base': 'Product category must be a valid MongoDB ObjectId hex string'
   }),
-  images: Joi.array().items(Joi.string().trim().required()).min(1).optional(),
+  images: Joi.array().items(
+    Joi.object({
+      url: Joi.string().trim().required(),
+      publicId: Joi.string().trim().required(),
+      isPrimary: Joi.boolean().required()
+    }).required()
+  ).min(1).optional(),
   sizes: Joi.array().items(Joi.string().valid('XS', 'S', 'M', 'L', 'XL', 'OS')).optional(),
   colors: Joi.array().items(
     Joi.object({
@@ -71,6 +89,7 @@ const updateProductSchema = Joi.object({
     })
   ).optional(),
   stock: Joi.number().integer().min(0).optional(),
+  inStock: Joi.boolean().optional(),
   featured: Joi.boolean().optional(),
   rating: Joi.number().min(0).max(5).optional(),
   reviewsCount: Joi.number().integer().min(0).optional()
@@ -81,7 +100,7 @@ router.route('/')
   .post(
     protect,
     restrictTo('admin'),
-    upload.array('images', 5),
+    upload.fields([{ name: 'primaryImage', maxCount: 1 }, { name: 'additionalImages', maxCount: 5 }]),
     productController.uploadProductImages,
     validate(createProductSchema),
     productController.createProduct
@@ -107,7 +126,7 @@ router.route('/:id')
   .patch(
     protect,
     restrictTo('admin'),
-    upload.array('images', 5),
+    upload.fields([{ name: 'primaryImage', maxCount: 1 }, { name: 'additionalImages', maxCount: 5 }]),
     productController.uploadProductImages,
     validate(updateProductSchema),
     productController.updateProduct

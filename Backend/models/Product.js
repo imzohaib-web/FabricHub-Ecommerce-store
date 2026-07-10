@@ -44,6 +44,17 @@ const productSchema = new mongoose.Schema({
     required: [true, 'A product must have a price'],
     min: [0, 'Product price must be a non-negative number']
   },
+  discountPrice: {
+    type: Number,
+    min: [0, 'Discount price must be a non-negative number'],
+    validate: {
+      validator: function(value) {
+        if (value === undefined || value === null) return true;
+        return value < this.price;
+      },
+      message: 'Discount price ({VALUE}) must be less than the regular price'
+    }
+  },
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
@@ -51,7 +62,20 @@ const productSchema = new mongoose.Schema({
     index: true
   },
   images: {
-    type: [String],
+    type: [{
+      url: {
+        type: String,
+        required: [true, 'Image URL is required']
+      },
+      publicId: {
+        type: String,
+        required: [true, 'Image public ID is required']
+      },
+      isPrimary: {
+        type: Boolean,
+        default: false
+      }
+    }],
     required: [true, 'A product must have at least one image'],
     validate: {
       validator: function(v) {

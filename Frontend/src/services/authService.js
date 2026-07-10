@@ -95,5 +95,37 @@ export const authService = {
       throw new Error(data.message || "Session expired");
     }
     return data.accessToken;
+  },
+
+  /**
+   * Get Google configuration from backend
+   */
+  async getGoogleConfig() {
+    const response = await fetch(`${BASE_URL}/google/config`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to fetch Google Client ID");
+    }
+    return data; // { googleClientId }
+  },
+
+  /**
+   * Log in / Register with Google access token
+   */
+  async googleLogin(accessToken) {
+    const response = await fetch(`${BASE_URL}/google`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "include",
+      body: JSON.stringify({ accessToken })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Google login failed");
+    }
+    return data; // { accessToken, data: { user } }
   }
 };

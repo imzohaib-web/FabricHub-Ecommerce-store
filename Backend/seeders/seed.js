@@ -45,9 +45,20 @@ const seedDatabase = async () => {
           `Validation Error: Category slug "${prod.category}" specified in product "${prod.title}" does not exist in categories dataset.`
         );
       }
+      
+      const normalizedImages = (prod.images || []).map((img, index) => {
+        const baseName = path.basename(img, path.extname(img));
+        return {
+          url: img,
+          publicId: `seed-${baseName}`,
+          isPrimary: index === 0
+        };
+      });
+
       return {
         ...prod,
         category: categoryId,
+        images: normalizedImages,
         slug: slugify(prod.title, { lower: true, strict: true })
       };
     });

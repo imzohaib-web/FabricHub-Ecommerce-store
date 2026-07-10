@@ -7,7 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Register() {
-  const { register, currentUser } = useAuth();
+  const { register, currentUser, loginWithGoogle, googleClientId } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -35,7 +35,30 @@ export default function Register() {
   };
 
   const handleGoogleSignup = () => {
-    setError("Google registration is currently disabled. Please register using the form above.");
+    setError("");
+    if (window.google && googleClientId) {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: googleClientId,
+        scope: "email profile openid",
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            const res = await loginWithGoogle(tokenResponse.access_token);
+            if (res.success) {
+              navigate("/");
+            } else {
+              setError(res.message);
+            }
+          }
+        },
+        error_callback: (err) => {
+          setError("Google sign-in failed. Please try again.");
+          console.error("Google OAuth token client error:", err);
+        }
+      });
+      client.requestAccessToken();
+    } else {
+      setError("Google Sign-In is currently unavailable. Please refresh or try again later.");
+    }
   };
 
   return (

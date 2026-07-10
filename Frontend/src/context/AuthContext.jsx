@@ -8,6 +8,20 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [googleClientId, setGoogleClientId] = useState(null);
+
+  // Load Google configuration on mount
+  useEffect(() => {
+    const fetchGoogleConfig = async () => {
+      try {
+        const config = await authService.getGoogleConfig();
+        setGoogleClientId(config.googleClientId);
+      } catch (err) {
+        console.error("Failed to load Google OAuth configuration:", err.message);
+      }
+    };
+    fetchGoogleConfig();
+  }, []);
 
   // Initialize session and restore user from backend on mount/refresh
   useEffect(() => {
@@ -89,11 +103,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Log in / Register using Google access token.
+   */
+  const loginWithGoogle = async (googleAccessToken) => {
+    try {
+      const res = await authService.googleLogin(googleAccessToken);
+      localStorage.setItem("fh_access_token", res.accessToken);
+      setCurrentUser(res.data.user);
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  };
+
   const value = {
     currentUser,
     login,
     register,
     logout,
+    loginWithGoogle,
+    googleClientId,
     isAdmin: currentUser?.role === "admin",
     loading,
   };

@@ -73,6 +73,10 @@ router.get('/verify-email/:token', authController.verifyEmail);
 router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
 router.patch('/reset-password/:token', validate(resetPasswordSchema), authController.resetPassword);
 
+// Google Sign-In endpoints
+router.get('/google/config', authController.getGoogleConfig);
+router.post('/google', authController.googleLogin);
+
 // Protected routes (require valid JWT)
 router.use(protect);
 router.post('/logout', authController.logout);

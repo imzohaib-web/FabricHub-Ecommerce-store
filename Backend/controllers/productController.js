@@ -2,7 +2,7 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../middlewares/upload');
+const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('../middlewares/upload');
 
 /**
  * Create a new product
@@ -145,16 +145,126 @@ exports.getProductBySlug = catchAsync(async (req, res, next) => {
  * Streams buffers directly.
  */
 exports.uploadProductImages = catchAsync(async (req, res, next) => {
-  // If no files are attached, proceed
-  if (!req.files || req.files.length === 0) return next();
+  // 1. Parse JSON fields in req.body if they come from FormData as strings
+  if (typeof req.body.sizes === 'string') {
+    try {
+      req.body.sizes = JSON.parse(req.body.sizes);
+    } catch (e) {
+      req.body.sizes = req.body.sizes.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  if (typeof req.body.colors === 'string') {
+    try {
+      req.body.colors = JSON.parse(req.body.colors);
+    } catch (e) {
+      req.body.colors = [];
+    }
+  }
+  if (typeof req.body.existingImages === 'string') {
+    try {
+      req.body.existingImages = JSON.parse(req.body.existingImages);
+    } catch (e) {
+      req.body.existingImages = [];
+    }
+  }
+  if (typeof req.body.featured === 'string') {
+    req.body.featured = req.body.featured === 'true';
+  }
+  if (typeof req.body.inStock === 'string') {
+    req.body.inStock = req.body.inStock === 'true';
+  }
+  if (req.body.discountPrice === '') {
+    delete req.body.discountPrice;
+  }
 
-  // Stream upload all images in parallel
-  const urls = await Promise.all(
-    req.files.map(file => uploadToCloudinary(file.buffer, 'products'))
-  );
+  // 2. Identify if there are uploaded files
+  const primaryFile = req.files && req.files.primaryImage ? req.files.primaryImage[0] : null;
+  const additionalFiles = req.files && req.files.additionalImages ? req.files.additionalImages : [];
 
-  // Store lists in req.body so they pass Joi validations
-  req.body.images = urls;
+  // If no new files and no existing images are specified (not FormData/empty payload), proceed
+  if (!primaryFile && additionalFiles.length === 0 && !req.body.existingImages) {
+    return next();
+  }
+
+  let newPrimaryImage = null;
+  let newAdditionalImages = [];
+
+  try {
+    // 3. Upload new primary image if provided
+    if (primaryFile) {
+      const url = await uploadToCloudinary(primaryFile.buffer, 'products');
+      const publicId = getPublicIdFromUrl(url);
+      newPrimaryImage = { url, publicId, isPrimary: true };
+    }
+
+    // 4. Upload new additional images if provided
+    if (additionalFiles.length > 0) {
+      newAdditionalImages = await Promise.all(
+        additionalFiles.map(async (file) => {
+          const url = await uploadToCloudinary(file.buffer, 'products');
+          const publicId = getPublicIdFromUrl(url);
+          return { url, publicId, isPrimary: false };
+        })
+      );
+    }
+  } catch (err) {
+    return next(new AppError('Failed to upload image(s) to Cloudinary: ' + err.message, 500));
+  }
+
+  // 5. Combine existing images and new uploads
+  let finalImages = [];
+  const existingImages = req.body.existingImages || [];
+
+  // Determine if it is a PATCH (update) operation
+  if (req.params.id) {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return next(new AppError('No product found with that ID', 404));
+    }
+
+    // Identify images to delete from Cloudinary: those in product.images but not in existingImages
+    if (product.images && product.images.length > 0) {
+      const imagesToDelete = product.images.filter(
+        (img) => !existingImages.some((existing) => existing.publicId === img.publicId)
+      );
+      if (imagesToDelete.length > 0) {
+        await Promise.all(imagesToDelete.map((img) => deleteFromCloudinary(img.url)));
+      }
+    }
+
+    // If new primary image is uploaded, we replace the primary image
+    if (newPrimaryImage) {
+      finalImages.push(newPrimaryImage);
+      // Ensure existing images are not marked as primary anymore
+      existingImages.forEach(img => img.isPrimary = false);
+    } else {
+      // Otherwise, keep the existing primary image if it still exists
+      const existingPrimary = existingImages.find((img) => img.isPrimary);
+      if (existingPrimary) {
+        finalImages.push(existingPrimary);
+      }
+    }
+
+    // Add kept existing additional images
+    const existingAdditionals = existingImages.filter((img) => !img.isPrimary);
+    finalImages.push(...existingAdditionals);
+
+    // Add new additional images
+    finalImages.push(...newAdditionalImages);
+  } else {
+    // POST (create) operation
+    if (newPrimaryImage) {
+      finalImages.push(newPrimaryImage);
+    }
+    finalImages.push(...newAdditionalImages);
+  }
+
+  // Set the final list of images in req.body to pass Joi validation and save to DB
+  req.body.images = finalImages;
+
+  // Clean up existingImages field from req.body so Joi doesn't reject it
+  delete req.body.existingImages;
+
   next();
 });
 
@@ -168,12 +278,6 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
 
   if (!product) {
     return next(new AppError('No product found with that ID', 404));
-  }
-
-  // If new images are uploaded, delete the ones that are no longer part of the product gallery to free up space
-  if (req.body.images && product.images && product.images.length > 0) {
-    const imagesToDelete = product.images.filter(img => !req.body.images.includes(img));
-    await Promise.all(imagesToDelete.map(url => deleteFromCloudinary(url)));
   }
 
   // Assign updated fields to the product document instance
@@ -201,7 +305,7 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
 
   // Delete all associated images from Cloudinary before deleting product from MongoDB
   if (product.images && product.images.length > 0) {
-    await Promise.all(product.images.map(url => deleteFromCloudinary(url)));
+    await Promise.all(product.images.map(img => deleteFromCloudinary(img.url)));
   }
 
   await Product.findByIdAndDelete(req.params.id);

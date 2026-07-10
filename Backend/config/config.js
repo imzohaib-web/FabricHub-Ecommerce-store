@@ -23,4 +23,8 @@ module.exports = {
     secret: process.env.JWT_SECRET,
     accessExpirationDays: process.env.JWT_EXPIRE || '7d',
   },
+  google: {
+    clientId: (process.env.GOOGLE_CLIENT_ID || '').trim(),
+    clientSecret: (process.env.GOOGLE_CLIENT_SECRET || '').trim(),
+  }
 };

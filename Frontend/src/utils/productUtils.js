@@ -135,13 +135,41 @@ export function buildProductPayload(formData, editingProduct) {
 export function mapBackendProduct(prod) {
   if (!prod) return null;
   const backendUrl = "http://localhost:5000";
+
+  const rawImages = prod.images || [];
+  const normalizedImages = rawImages.map(img => {
+    if (typeof img === 'string') {
+      return {
+        url: img.startsWith("/") ? `${backendUrl}${img}` : img,
+        publicId: img,
+        isPrimary: false
+      };
+    }
+    return {
+      url: img.url.startsWith("/") ? `${backendUrl}${img.url}` : img.url,
+      publicId: img.publicId,
+      isPrimary: !!img.isPrimary
+    };
+  });
+
+  // Ensure at least one primary image exists if we have images
+  if (normalizedImages.length > 0 && !normalizedImages.some(img => img.isPrimary)) {
+    normalizedImages[0].isPrimary = true;
+  }
+
+  const primaryImgObj = normalizedImages.find(img => img.isPrimary) || normalizedImages[0];
+  const primaryImageUrl = primaryImgObj ? primaryImgObj.url : "";
+  const imagesUrls = normalizedImages.map(img => img.url);
+
   return {
     id: prod._id || prod.id,
     name: prod.title || prod.name,
     price: prod.price,
+    discountPrice: prod.discountPrice !== undefined ? prod.discountPrice : "",
     category: typeof prod.category === "object" && prod.category !== null ? prod.category.slug : (prod.category || "unstitched"),
-    image: prod.images && prod.images[0] ? (prod.images[0].startsWith("/") ? `${backendUrl}${prod.images[0]}` : prod.images[0]) : "",
-    images: (prod.images || []).map((img) => (img.startsWith("/") ? `${backendUrl}${img}` : img)),
+    image: primaryImageUrl,
+    images: imagesUrls, // Keep flat URL list for compatibility with existing components
+    rawImages: normalizedImages, // Object array format [{url, publicId, isPrimary}] for admin form modal
     description: prod.description,
     rating: prod.rating || 5.0,
     reviewsCount: prod.reviewsCount || 0,

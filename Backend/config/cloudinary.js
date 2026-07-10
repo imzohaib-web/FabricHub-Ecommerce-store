@@ -31,7 +31,10 @@ if (isConfigured) {
         const mockUrl = `https://res.cloudinary.com/mock-cloud/image/upload/v1720000000/${folder}/mock_${randomId}.jpg`;
         
         setTimeout(() => {
-          callback(null, { secure_url: mockUrl });
+          callback(null, { 
+            secure_url: mockUrl, 
+            public_id: `${folder}/mock_${randomId}`
+          });
         }, 100);
       }
     };

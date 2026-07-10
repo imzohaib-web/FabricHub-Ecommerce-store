@@ -320,3 +320,65 @@ exports.getMe = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+/**
+ * Get Google client ID config
+ */
+exports.getGoogleConfig = catchAsync(async (req, res, next) => {
+  res.status(200).json({
+    status: 'success',
+    googleClientId: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : null
+  });
+});
+
+/**
+ * Handle Google sign in and registration
+ */
+exports.googleLogin = catchAsync(async (req, res, next) => {
+  const { accessToken } = req.body;
+
+  if (!accessToken) {
+    return next(new AppError('Google access token is required.', 400));
+  }
+
+  // 1) Verify Google access token and retrieve user info from Google APIs
+  const googleUserRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+
+  if (!googleUserRes.ok) {
+    return next(new AppError('Invalid Google access token.', 401));
+  }
+
+  const googleUser = await googleUserRes.json();
+  const { email, name, email_verified } = googleUser;
+
+  if (!email_verified) {
+    return next(new AppError('Google account email is not verified.', 400));
+  }
+
+  // 2) Find user in database or create new user
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    // Generate secure random password for Google-signed up users
+    const tempPassword = crypto.randomBytes(16).toString('hex');
+    user = await User.create({
+      name,
+      email,
+      password: tempPassword,
+      isVerified: true
+    });
+  } else {
+    // If user exists, ensure they are verified since they verified via Google
+    if (!user.isVerified) {
+      user.isVerified = true;
+      await user.save({ validateBeforeSave: false });
+    }
+  }
+
+  // 3) Send tokens response
+  await sendTokensResponse(user, 200, res);
+});

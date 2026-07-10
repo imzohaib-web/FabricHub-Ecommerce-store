@@ -58,26 +58,40 @@ export const productService = {
    * Create a new product in the backend.
    */
   async createProduct(productData) {
-    const payload = {
-      title: productData.name,
-      description: productData.description,
-      price: Number(productData.price),
-      category: productData.category, // Must be MongoDB ObjectId hex string
-      images: productData.images,
-      sizes: productData.sizes,
-      colors: productData.colors,
-      stock: productData.stock !== undefined ? Number(productData.stock) : (productData.inStock ? 10 : 0),
-      featured: productData.isFeatured || false,
-    };
+    const formData = new FormData();
+    formData.append("title", productData.name);
+    formData.append("description", productData.description);
+    formData.append("price", Number(productData.price));
+    if (productData.discountPrice !== undefined && productData.discountPrice !== "") {
+      formData.append("discountPrice", Number(productData.discountPrice));
+    }
+    formData.append("category", productData.category); // Must be MongoDB ObjectId hex string
+    formData.append("stock", productData.stock !== undefined ? Number(productData.stock) : (productData.inStock ? 10 : 0));
+    formData.append("featured", productData.isFeatured || false);
+    formData.append("inStock", productData.inStock);
+
+    // Serialize arrays/objects to pass as text in FormData
+    formData.append("sizes", JSON.stringify(productData.sizes || []));
+    formData.append("colors", JSON.stringify(productData.colors || []));
+
+    // Append file objects
+    if (productData.primaryImageFile) {
+      formData.append("primaryImage", productData.primaryImageFile);
+    }
+    if (productData.additionalImageFiles && productData.additionalImageFiles.length > 0) {
+      productData.additionalImageFiles.forEach((file) => {
+        formData.append("additionalImages", file);
+      });
+    }
 
     const token = localStorage.getItem("fh_access_token");
     const response = await fetch(BASE_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         ...(token && { "Authorization": `Bearer ${token}` })
+        // Browser sets Content-Type boundary automatically for FormData
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     if (!response.ok) {
@@ -93,26 +107,40 @@ export const productService = {
    * Update an existing product by ID.
    */
   async updateProduct(id, productData) {
-    const payload = {
-      title: productData.name,
-      description: productData.description,
-      price: Number(productData.price),
-      category: productData.category, // Must be MongoDB ObjectId hex string
-      images: productData.images,
-      sizes: productData.sizes,
-      colors: productData.colors,
-      stock: productData.stock !== undefined ? Number(productData.stock) : (productData.inStock ? 10 : 0),
-      featured: productData.isFeatured || false,
-    };
+    const formData = new FormData();
+    formData.append("title", productData.name);
+    formData.append("description", productData.description);
+    formData.append("price", Number(productData.price));
+    if (productData.discountPrice !== undefined) {
+      formData.append("discountPrice", productData.discountPrice === "" ? "" : Number(productData.discountPrice));
+    }
+    formData.append("category", productData.category); // Must be MongoDB ObjectId hex string
+    formData.append("stock", productData.stock !== undefined ? Number(productData.stock) : (productData.inStock ? 10 : 0));
+    formData.append("featured", productData.isFeatured || false);
+    formData.append("inStock", productData.inStock);
+
+    // Serialize arrays/objects
+    formData.append("sizes", JSON.stringify(productData.sizes || []));
+    formData.append("colors", JSON.stringify(productData.colors || []));
+    formData.append("existingImages", JSON.stringify(productData.existingImages || []));
+
+    // Append file objects
+    if (productData.primaryImageFile) {
+      formData.append("primaryImage", productData.primaryImageFile);
+    }
+    if (productData.additionalImageFiles && productData.additionalImageFiles.length > 0) {
+      productData.additionalImageFiles.forEach((file) => {
+        formData.append("additionalImages", file);
+      });
+    }
 
     const token = localStorage.getItem("fh_access_token");
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: "PATCH",
       headers: {
-        "Content-Type": "application/json",
         ...(token && { "Authorization": `Bearer ${token}` })
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     if (!response.ok) {
